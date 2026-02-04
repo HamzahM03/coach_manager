@@ -1,20 +1,35 @@
 "use client"
 
 import { useState } from 'react';
+import { createBrowserSupabaseClient } from '../lib/supabase/client';
 
 
 export default function Login(){
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [status, setStatus] = useState("")
+    const supabase = createBrowserSupabaseClient();
 
-    const submitHandler = (e: React.SubmitEvent<HTMLFormElement>) => {
+
+    const submitHandler = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
+        const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password
+        })
+
+        if (error){
+            setStatus(error.message)
+        }
+        else{
+            setStatus("Signed In Successfully")
+        }
 
     }
 
     return (
         <>
-            <form onSubmit={()=>submitHandler}>
+            <form onSubmit={submitHandler}>
                 <label htmlFor="email">Email: </label>
                 <input id="email" name="email" value={email} type="email" onChange={(e)=>setEmail(e.target.value)}/>
                 
@@ -23,6 +38,7 @@ export default function Login(){
                 <button type="submit">Submit</button>
                 
             </form>
+            <p>{status}</p>
         
         
         </>
