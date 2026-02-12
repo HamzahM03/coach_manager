@@ -1,32 +1,27 @@
 "use client"
 
-import { useState } from "react"
-import { createBrowserSupabaseClient } from "../lib/supabase/client"
+import { useActionState } from "react"
+import { signIn } from "@/app/actions/auth" // <-- change this path to wherever your action lives
+import type { AuthFormState } from "@/app/lib/definitions"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card"
+import { Button } from "@/app/components/ui/button"
+import { Input } from "@/app/components/ui/input"
+import { Label } from "@/app/components/ui/label"
+
+const initialState: AuthFormState = null
 
 export default function Login() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [status, setStatus] = useState("")
-  const supabase = createBrowserSupabaseClient()
+  const [state, action, isPending] = useActionState(signIn, initialState)
 
-  const submitHandler = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      setStatus(error.message)
-    } else {
-      setStatus("Signed In Successfully")
-    }
-  }
+  // (Optional) flatten all field errors for a simple display
+  const allErrors = state?.errors ? Object.values(state.errors).flat() : []
 
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
@@ -37,25 +32,34 @@ export default function Login() {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={submitHandler} className="space-y-4">
+          {/* Key change: form action=action (server action) */}
+          <form action={action} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 autoComplete="email"
+                required
               />
+
+              {/* Field-specific errors (works even though errors is Record) */}
+              {state?.errors?.email?.map((err) => (
+                <p key={err} className="text-sm text-destructive">
+                  {err}
+                </p>
+              ))}
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                {/* optional: replace with your route later */}
-                <a href="#" className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+                <a
+                  href="#"
+                  className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+                >
                   Forgot?
                 </a>
               </div>
@@ -64,27 +68,36 @@ export default function Login() {
                 id="password"
                 name="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 autoComplete="current-password"
+                required
               />
+
+              {state?.errors?.password?.map((err) => (
+                <p key={err} className="text-sm text-destructive">
+                  {err}
+                </p>
+              ))}
             </div>
 
-            <Button type="submit" className="w-full">
-              Sign in
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? "Signing in..." : "Sign in"}
             </Button>
 
-            {!!status && (
-              <p
-                className={`text-sm ${
-                  status.toLowerCase().includes("success")
-                    ? "text-foreground"
-                    : "text-destructive"
-                }`}
-              >
-                {status}
-              </p>
+            {/* General message from the server action (e.g. invalid credentials) */}
+            {!!state?.message && (
+              <p className="text-sm text-destructive">{state.message}</p>
+            )}
+
+            {/* Optional: show all errors at bottom too */}
+            {allErrors.length > 0 && (
+              <div className="space-y-1">
+                {allErrors.map((err) => (
+                  <p key={err} className="text-sm text-destructive">
+                    {err}
+                  </p>
+                ))}
+              </div>
             )}
           </form>
         </CardContent>
