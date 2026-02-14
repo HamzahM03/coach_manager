@@ -1,8 +1,8 @@
 import * as z from "zod"
 
 export const SignInFormSchema = z.object({
-  email: z.email("Please enter a valid email.").trim(),
-  password: z.string().min(1, "Password is required.").trim(),
+  email: z.email({ message: "Please enter a valid email." }),
+  password: z.string().min(1, "Password is required."),
 })
 
 export type AuthFormState =
