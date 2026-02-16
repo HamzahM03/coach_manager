@@ -30,7 +30,7 @@ export async function signIn(
   }
 
   // if you want, redirect after login (common pattern)
-  redirect("/protected/dashboard")
+  redirect("/dashboard")
 
   // (unreachable, but keeps TS happy if you remove redirect later)
   // return { message: "Signed in successfully!" }
